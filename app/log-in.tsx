@@ -7,7 +7,7 @@ import images from "@/constants/images"; // Asegúrate de tener tu imagen correc
 
 const LogIn = () => {
   const router = useRouter();
-  const [username, setUsername] = useState('');
+  const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<TextInput>(null);
@@ -24,19 +24,36 @@ const LogIn = () => {
   }, []);
 
   const handleLogin = async () => {
-    if (!username || !password) {
+    if (!code || !password) {
       Alert.alert("Error", "Por favor, completa todos los campos.");
       return;
     }
-
-    // Simulación de autenticación
-    if (username === '1' && password === '1') {
-      await AsyncStorage.setItem('userSession', JSON.stringify({ username }));
-      router.replace('./explore');
-    } else {
-      Alert.alert("Autenticación fallida", "Usuario o contraseña incorrectos.");
+  
+    // Mostrar alerta con las credenciales
+    Alert.alert("Credenciales Enviadas", `Usuario: ${code}\nContraseña: ${password}`);
+  
+    try {
+      const response = await fetch('http://192.168.24.213:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code, password })
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        router.replace('./explore');
+      } else {
+        Alert.alert("Autenticación fallida", "Usuario o contraseña incorrectos.");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "No se pudo conectar al servidor.");
     }
   };
+  
 
   return (
     <SafeAreaView className='bg-white h-full'>
@@ -61,8 +78,8 @@ const LogIn = () => {
             placeholder="Usuario"
             className="border border-gray-300 rounded-xl p-4 text-base text-black mb-4"
             placeholderTextColor="#999"
-            value={username}
-            onChangeText={setUsername}
+            value={code}
+            onChangeText={setCode}
             returnKeyType="next"
             onSubmitEditing={() => passwordRef.current?.focus()}
             blurOnSubmit={false}
